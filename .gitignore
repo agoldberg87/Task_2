@@ -1,0 +1,29 @@
+# Python cache directories
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Testing cache
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# Allure test results
+allure_results/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
