@@ -24,12 +24,19 @@ def register_user(email, password, name):
     return user_data, response
 
 
-
-
 @allure.step('Обновление данных пользователя')
 def update_user_data(access_token, updated_data):
     headers = {
         "Authorization": access_token
     }
     response = requests.patch(f"{Data.BASE_URL}/auth/user", json=updated_data, headers=headers)
+    return response
+
+
+@allure.step('Удаление пользователя')
+def delete_user(access_token):
+    headers = {
+        "Authorization": access_token
+    }
+    response = requests.delete(f"{Data.BASE_URL}/auth/user", headers=headers)
     return response

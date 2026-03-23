@@ -1,4 +1,4 @@
-class Data():
+class Data:
 
     BASE_URL = "https://stellarburgers.education-services.ru/api"
     message_failure_existing_user = "User already exists"

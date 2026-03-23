@@ -57,10 +57,8 @@ class TestUserRegistration:
 class TestUserLogin:
     
     @allure.title('Логин существующего пользователя')
-    def test_login_existing_user_success(self, generate_random_email, generate_random_password, generate_random_name):
-        register_user(generate_random_email, generate_random_password, generate_random_name)
-        
-        login_response = login_user(generate_random_email, generate_random_password)
+    def test_login_existing_user_success(self, create_and_delete_user):
+        login_response = login_user(create_and_delete_user["email"], create_and_delete_user["password"])
         
         assert login_response.status_code == 200, f"Ожидался статус 200, получен {login_response.status_code}"
         
@@ -71,19 +69,17 @@ class TestUserLogin:
         assert "user" in login_data, "В ответе должен быть объект user"
         
         user_info = login_data["user"]
-        assert user_info["email"] == generate_random_email, "Email пользователя должен совпадать"
-        assert user_info["name"] == generate_random_name, "Имя пользователя должно совпадать"
+        assert user_info["email"] == create_and_delete_user["email"], "Email пользователя должен совпадать"
+        assert user_info["name"] == create_and_delete_user["name"], "Имя пользователя должно совпадать"
     
     
     @allure.title('Логин с неверными учетными данными')
     @pytest.mark.parametrize("field", ["email", "password"])
-    def test_login_with_invalid_credentials_failure(self, field, generate_random_email, generate_random_password, generate_random_name):
-        register_user(generate_random_email, generate_random_password, generate_random_name)
-
+    def test_login_with_invalid_credentials_failure(self, field, create_and_delete_user):
         if field == "email":
-            response = login_user("invalid_email", generate_random_password)
+            response = login_user("invalid_email", create_and_delete_user["password"])
         else:
-            response = login_user(generate_random_email, "invalid_password")
+            response = login_user(create_and_delete_user["email"], "invalid_password")
         
         assert response.status_code == 401, f"Ожидался статус 401, получен {response.status_code}"
         
@@ -97,19 +93,14 @@ class TestUserDataModification:
     
     @allure.title('Обновление данных пользователя с авторизацией')
     @pytest.mark.parametrize("field, value_generator", [
-        ("name", lambda generate_random_name: f"updated_{generate_random_name}"),
-        ("email", lambda generate_random_email: f"updated_{generate_random_email}"),
-        ("password", lambda generate_random_password: f"updated_{generate_random_password}")
+        ("name", lambda name: f"updated_{name}"),
+        ("email", lambda email: f"updated_{email}"),
+        ("password", lambda password: f"updated_{password}")
     ])
-    def test_update_user_data_with_authorization_success(self, field, value_generator, generate_random_name, generate_random_email, generate_random_password):
-        register_user(generate_random_email, generate_random_password, generate_random_name)
+    def test_update_user_data_with_authorization_success(self, field, value_generator, create_and_delete_user):
+        access_token = create_and_delete_user["access_token"]
         
-        login_response = login_user(generate_random_email, generate_random_password)
-        
-        login_data = login_response.json()
-        access_token = login_data["accessToken"]
-        
-        updated_value = value_generator(f"{generate_random_name}+new" if field == "name" else f"{generate_random_email}+new" if field == "email" else f"{generate_random_password}+new")
+        updated_value = value_generator(create_and_delete_user[field])
         updated_data = {field: updated_value}
         
         update_response = update_user_data(access_token, updated_data)
@@ -129,17 +120,10 @@ class TestUserDataModification:
     
 
     @allure.title('Обновление электронной почты на уже использованную')
-    def test_update_user_data_with_already_used_email_failure(self, generate_random_name, generate_random_email, generate_random_password):
-        register_user(generate_random_email, generate_random_password, generate_random_name)
+    def test_update_user_data_with_already_used_email_failure(self, create_and_delete_user, create_and_delete_second_user):
+        access_token = create_and_delete_user["access_token"]
         
-        second_email = f"second_{generate_random_email}"
-        register_user(second_email, generate_random_password, generate_random_name)
-        
-        login_response = login_user(generate_random_email, generate_random_password)
-        login_data = login_response.json()
-        access_token = login_data["accessToken"]
-        
-        updated_data = {"email": second_email}
+        updated_data = {"email": create_and_delete_second_user["email"]}
         
         update_response = update_user_data(access_token, updated_data)
         
